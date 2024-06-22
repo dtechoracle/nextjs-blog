@@ -12,6 +12,9 @@ primary_region = 'ams'
   source = 'data'
   destination = '/data'
 
+[env]
+  DATABASE_URL = "file:/data/dev.db"
+
 [http_service]
   internal_port = 3000
   force_https = true
