@@ -15,10 +15,29 @@ model User {
   emailVerified  DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  comments       Comments[]
 }
 
 model NewsletterSignup {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   createdAt DateTime @default(now())
+}
+
+model Post {
+  id        Int       @id @default(autoincrement())
+  title     String
+  content   String
+  comments  Comments[]
+}
+
+model Comments {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  content   String
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }

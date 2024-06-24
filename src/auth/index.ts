@@ -1,41 +1,51 @@
-import type { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import arcjet, { detectBot, slidingWindow } from "@arcjet/next";
+import type { NextApiRequest, NextApiResponse } from "next";
+import NextAuth from "next-auth";
+import GitHub from "next-auth/providers/github";
+// @ts-ignore
+import type { NextAuthConfig } from "next-auth";
 
-export const options: NextAuthOptions = {
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        username: { label: "Username", type: "text", placeholder: "jsmith" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        const user = { id: "1", name: "ali", password: "ali123" };
+export const config = {
+  providers: [GitHub],
+} satisfies NextAuthConfig;
 
-        if (
-          credentials?.username === user.name &&
-          credentials.password === user.password
-        ) {
-          return user;
-        } else {
-          return null;
-        }
-      },
+export const { handlers, signIn, signOut, auth } = NextAuth(config);
+
+const aj = arcjet({
+  key: process.env.ARCJET_KEY,
+  rules: [
+    slidingWindow({
+      mode: "LIVE", // will block requests. Use "DRY_RUN" to log only
+      interval: 60, // tracks requests across a 60 second sliding window
+      max: 10, // allow a maximum of 10 requests
+    }),
+    detectBot({
+      mode: "LIVE", // will block requests. Use "DRY_RUN" to log only
+      block: ["AUTOMATED"], // blocks all automated clients
     }),
   ],
-  pages: {
-    signIn: "/about", // Redirect to "/about" after sign-in
-  },
-  session: {
-    strategy: "jwt",
-  },
-  jwt: {
-    secret: process.env.NEXTAUTH_SECRET!,
-  },
-  callbacks: {
-    async redirect({ url, baseUrl }) {
-      // Redirect to "/" (homepage) after successful sign-in
-      return baseUrl;
-    },
-  },
+});
+
+const ajProtectedHandler = async (
+  req: NextApiRequest,
+  res: NextApiResponse,
+) => {
+  if (req.method === "POST") {
+    // Protect with Arcjet
+    const decision = await aj.protect(req);
+    console.log("Arcjet decision", decision);
+
+    if (decision.isDenied()) {
+      if (decision.reason.isRateLimit()) {
+        return res.status(429).json({ error: "Too many requests" });
+      } else {
+        return res.status(403).json({ error: "Unauthorized" });
+      }
+    }
+  }
+
+  // Then call the original handler
+  return handlers(req, res);
 };
+
+export default ajProtectedHandler;
