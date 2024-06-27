@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import CommentPage from "../../comments/[postId]";
 
 export default function ClientPage() {
 	return <NewsletterForm />;
@@ -36,19 +37,37 @@ function NewsletterForm() {
 	};
 
 	return (
-		<div className="newsletter-form">
-			<h2>Sign up for our Newsletter</h2>
-			<form onSubmit={handleSubmit}>
-				<input
-					type="email"
-					value={email}
-					onChange={(e) => setEmail(e.target.value)}
-					placeholder="Your email"
-					required
-				/>
-				<button type="submit">Subscribe</button>
-			</form>
-			{message && <p>{message}</p>}
-		</div>
+		<main className="flex-1">
+			<section className="bg-gray-100 py-12 px-6 md:px-12">
+				<div className="container mx-auto max-w-3xl space-y-6">
+					<div>
+						<h2 className="text-3xl font-bold mb-2">
+							Subscribe to our newsletter
+						</h2>
+						<p className="text-gray-600">
+							Get the latest updates and news from Envitab Blog
+						</p>
+					</div>
+
+					<form className="flex items-center" onSubmit={handleSubmit}>
+						<input
+							type="email"
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							placeholder="Enter your email"
+							required
+							className="flex-1 mr-4"
+						/>
+						<button
+							className="bg-gray-700 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded"
+							type="submit"
+						>
+							Subscribe
+						</button>
+					</form>
+				</div>
+			</section>
+			<div>{message && <p className="mb-4">{message}</p>}</div>
+		</main>
 	);
 }
