@@ -7,24 +7,24 @@ import { notFound } from "next/navigation";
 import ClientPage from "./ClientPage";
 
 export default async function Page({ params }: { params: { slug: string } }) {
-  const post = await fetchBySlug(params.slug);
-  if (!post) notFound();
+	const post = await fetchBySlug(params.slug);
+	if (!post) notFound();
 
-  const blocks = await fetchPageBlocks(post.id);
+	const blocks = await fetchPageBlocks(post.id);
 
-  const renderer = new NotionRenderer({
-    client: notion,
-  });
+	const renderer = new NotionRenderer({
+		client: notion,
+	});
 
-  renderer.use(hljsPlugin({}));
-  renderer.use(bookmarkPlugin(undefined));
+	renderer.use(hljsPlugin({}));
+	renderer.use(bookmarkPlugin(undefined));
 
-  const html = await renderer.render(...blocks);
+	const html = await renderer.render(...blocks);
 
-  return (
-    <div className="p-12">
-      <div className="prose" dangerouslySetInnerHTML={{ __html: html }}></div>
-      <ClientPage />
-    </div>
-  );
+	return (
+		<div className="p-12">
+			<div className="prose" dangerouslySetInnerHTML={{ __html: html }}></div>
+			<ClientPage />
+		</div>
+	);
 }

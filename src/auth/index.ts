@@ -6,46 +6,46 @@ import GitHub from "next-auth/providers/github";
 import type { NextAuthConfig } from "next-auth";
 
 export const config = {
-  providers: [GitHub],
+	providers: [GitHub],
 } satisfies NextAuthConfig;
 
 export const { handlers, signIn, signOut, auth } = NextAuth(config);
 
 const aj = arcjet({
-  key: process.env.ARCJET_KEY,
-  rules: [
-    slidingWindow({
-      mode: "LIVE", // will block requests. Use "DRY_RUN" to log only
-      interval: 60, // tracks requests across a 60 second sliding window
-      max: 10, // allow a maximum of 10 requests
-    }),
-    detectBot({
-      mode: "LIVE", // will block requests. Use "DRY_RUN" to log only
-      block: ["AUTOMATED"], // blocks all automated clients
-    }),
-  ],
+	key: process.env.ARCJET_KEY,
+	rules: [
+		slidingWindow({
+			mode: "LIVE", // will block requests. Use "DRY_RUN" to log only
+			interval: 60, // tracks requests across a 60 second sliding window
+			max: 10, // allow a maximum of 10 requests
+		}),
+		detectBot({
+			mode: "LIVE", // will block requests. Use "DRY_RUN" to log only
+			block: ["AUTOMATED"], // blocks all automated clients
+		}),
+	],
 });
 
 const ajProtectedHandler = async (
-  req: NextApiRequest,
-  res: NextApiResponse,
+	req: NextApiRequest,
+	res: NextApiResponse,
 ) => {
-  if (req.method === "POST") {
-    // Protect with Arcjet
-    const decision = await aj.protect(req);
-    console.log("Arcjet decision", decision);
+	if (req.method === "POST") {
+		// Protect with Arcjet
+		const decision = await aj.protect(req);
+		console.log("Arcjet decision", decision);
 
-    if (decision.isDenied()) {
-      if (decision.reason.isRateLimit()) {
-        return res.status(429).json({ error: "Too many requests" });
-      } else {
-        return res.status(403).json({ error: "Unauthorized" });
-      }
-    }
-  }
+		if (decision.isDenied()) {
+			if (decision.reason.isRateLimit()) {
+				return res.status(429).json({ error: "Too many requests" });
+			} else {
+				return res.status(403).json({ error: "Unauthorized" });
+			}
+		}
+	}
 
-  // Then call the original handler
-  return handlers(req, res);
+	// Then call the original handler
+	return handlers(req, res);
 };
 
 export default ajProtectedHandler;
